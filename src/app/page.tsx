@@ -391,19 +391,26 @@ export default function Home() {
           localStorage.setItem('dsaRevisionMap', JSON.stringify(newRevs));
 
           if (confirm("Imported locally! Do you want to push this entire backup straight to your live GitHub repository right now to make it permanent?")) {
-            Promise.all([
-              apiSync('OVERWRITE_NOTES', newNotes).then(r=>r.json()),
-              apiSync('UPDATE_REVISIONS', newRevs).then(r=>r.json()),
-              apiSync('OVERWRITE_FRIENDS', newFriends).then(r=>r.json())
-            ]).then(results => {
-              const fails = results.filter(r => !r.success);
+            // Must be sequential to prevent GitHub 409 Conflict (parallel commits to same branch)
+            const syncData = async () => {
+              const fails = [];
+              const notesRes = await apiSync('OVERWRITE_NOTES', newNotes).then(r=>r.json());
+              if (!notesRes.success) fails.push(notesRes);
+              
+              const revsRes = await apiSync('UPDATE_REVISIONS', newRevs).then(r=>r.json());
+              if (!revsRes.success) fails.push(revsRes);
+              
+              const friendsRes = await apiSync('OVERWRITE_FRIENDS', newFriends).then(r=>r.json());
+              if (!friendsRes.success) fails.push(friendsRes);
+
               if (fails.length === 0) {
                 alert("Successfully pushed full backup to GitHub! Refreshing page to align sync...");
                 window.location.reload();
               } else {
                 alert(`Warning: Some syncs failed!\nDetails: ${fails.map(f => f.error).join(', ')}`);
               }
-            });
+            };
+            syncData();
           }
         } catch(error) {
           alert("Error parsing JSON file");
