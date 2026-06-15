@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI-Powered DSA Vault & SRS Tracker
 
-## Getting Started
+A heavily customized, AI-driven Next.js dashboard for tracking Data Structures and Algorithms (DSA) progress. It features Spaced Repetition (SRS), a Blind Mode for practicing pattern recognition, and an automated deployment pipeline powered entirely by your AI coding assistant.
 
-First, run the development server:
+## 🚀 Quick Start for New Users (Friends & Collaborators)
 
+If a friend shared this project with you, here is exactly how to set up your own personal, separate instance that syncs to your phone via Vercel.
+
+### 1. Clone the Project
+Open your terminal and clone the repository to your local machine:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/YOUR_FRIENDS_USERNAME/dsa-tracker.git my-dsa-vault
+cd my-dsa-vault
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Connect to Your Own GitHub Account
+You don't want to push your notes to your friend's repository! You need to link this code to a brand new repository owned by *you*.
+1. Go to [GitHub](https://github.com/new) and create a new, empty repository (e.g., `my-dsa-vault`).
+2. Run these commands in your terminal to point the code to your new repository:
+```bash
+# Remove your friend's git connection
+git remote remove origin
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# Add your new GitHub URL
+git remote add origin https://github.com/YOUR_USERNAME/my-dsa-vault.git
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Push the code to your GitHub
+git push -u origin main
+```
 
-## Learn More
+### 3. Deploy to Vercel (For Free Mobile Access)
+To get that handy, read-only mobile view so you can review notes on the train:
+1. Go to [Vercel](https://vercel.com/new) and log in with your GitHub account.
+2. Click **Import** next to your `my-dsa-vault` repository.
+3. Click **Deploy**. 
+*(In 30 seconds, Vercel will give you a live `.vercel.app` URL. Bookmark this on your phone!)*
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Train Your AI
+This project is designed to be completely maintained by an AI (like Cursor, Windsurf, or GitHub Copilot).
+Open the `AI_WORKFLOW_PROMPTS.md` file in this project, copy the massive "Master Prompt", and paste it into your AI Chat. 
+From then on, whenever you finish a LeetCode problem, just tell the AI: *"I solved Two Sum, here is the code, please archive it."* 
+The AI will automatically write the code to your vault, commit it to Git, and push it to GitHub—which automatically updates your live Vercel app!
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛠 Features
+- **Spaced Repetition System (SRS):** Automatically tracks when you need to revise a problem (Forgot, Hard, Easy intervals).
+- **Blind Mode:** Hides tags, complexities, and code so you can practice pattern recognition.
+- **Topic Analytics:** Auto-categorizes problems by topics and displays a dashboard of your weakest areas.
+- **AI Automation:** Designed specifically for an AI agent to parse, format, and push code directly to the vault autonomously.
