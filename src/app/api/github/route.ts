@@ -4,9 +4,19 @@ export async function POST(request: Request) {
   try {
     const { action, payload } = await request.json();
     
+    // Security: Check if ADMIN_SECRET is set and matches the Authorization header
+    const adminSecret = process.env.ADMIN_SECRET;
+    if (adminSecret && request.headers.get('Authorization') !== adminSecret) {
+      return NextResponse.json({ success: false, error: 'Unauthorized', details: 'Invalid or missing ADMIN_SECRET' }, { status: 401 });
+    }
+    
     // Read from Vercel Environment Variables securely
     const token = process.env.GITHUB_TOKEN;
     const repo = process.env.GITHUB_REPO; // Format: "username/repo-name"
+
+    if (action === 'VERIFY_SECRET') {
+      return NextResponse.json({ success: true, message: 'Valid secret' });
+    }
 
     if (!token || !repo) {
       if (process.env.NODE_ENV === 'development') {
@@ -19,9 +29,9 @@ export async function POST(request: Request) {
     }
 
     let filePath = '';
-    if (action === 'ADD_ALTERNATE_WAY' || action === 'UPDATE_NOTE_FIELD') filePath = 'src/data/notes.json';
+    if (action === 'ADD_NOTE' || action === 'ADD_ALTERNATE_WAY' || action === 'UPDATE_NOTE_FIELD' || action === 'REMOVE_ALTERNATE_WAY') filePath = 'src/data/notes.json';
     else if (action === 'UPDATE_REVISIONS') filePath = 'src/data/revisions.json';
-    else if (action === 'ADD_FRIEND') filePath = 'src/data/friends.json';
+    else if (action === 'ADD_FRIEND' || action === 'REMOVE_FRIEND') filePath = 'src/data/friends.json';
     else return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
 
     const apiUrl = `https://api.github.com/repos/${repo}/contents/${filePath}`;
@@ -66,6 +76,10 @@ export async function POST(request: Request) {
       if (!currentData[noteIndex].otherWays) currentData[noteIndex].otherWays = [];
       currentData[noteIndex].otherWays.push(alternateWay);
       newContentString = JSON.stringify(currentData, null, 2);
+    } else if (action === 'ADD_NOTE') {
+      if (!Array.isArray(currentData)) currentData = [];
+      currentData.push(payload);
+      newContentString = JSON.stringify(currentData, null, 2);
     } else if (action === 'UPDATE_NOTE_FIELD') {
       const { noteId, field, value } = payload;
       const noteIndex = currentData.findIndex((n: any) => n.id === noteId);
@@ -75,6 +89,19 @@ export async function POST(request: Request) {
     } else if (action === 'ADD_FRIEND') {
       if (!Array.isArray(currentData)) currentData = [];
       currentData.push(payload);
+      newContentString = JSON.stringify(currentData, null, 2);
+    } else if (action === 'REMOVE_FRIEND') {
+      const { name } = payload;
+      if (Array.isArray(currentData)) {
+        currentData = currentData.filter((f: any) => f.name !== name);
+      }
+      newContentString = JSON.stringify(currentData, null, 2);
+    } else if (action === 'REMOVE_ALTERNATE_WAY') {
+      const { noteId, altId } = payload;
+      const noteIndex = currentData.findIndex((n: any) => n.id === noteId);
+      if (noteIndex !== -1 && currentData[noteIndex].otherWays) {
+        currentData[noteIndex].otherWays = currentData[noteIndex].otherWays.filter((w: any) => w.id !== altId);
+      }
       newContentString = JSON.stringify(currentData, null, 2);
     } else if (action === 'UPDATE_REVISIONS') {
       currentData = payload;
@@ -120,6 +147,39 @@ async function handleLocalDevelopment(action: string, payload: any) {
     if (noteIndex !== -1) {
       if (!data[noteIndex].otherWays) data[noteIndex].otherWays = [];
       data[noteIndex].otherWays.push(alternateWay);
+      await fs.writeFile(notesPath, JSON.stringify(data, null, 2));
+    }
+  } else if (action === 'ADD_NOTE') {
+    const notesPath = path.join(process.cwd(), 'src', 'data', 'notes.json');
+    const data = JSON.parse(await fs.readFile(notesPath, 'utf8'));
+    data.push(payload);
+    await fs.writeFile(notesPath, JSON.stringify(data, null, 2));
+  } else if (action === 'UPDATE_NOTE_FIELD') {
+    const { noteId, field, value } = payload;
+    const notesPath = path.join(process.cwd(), 'src', 'data', 'notes.json');
+    const data = JSON.parse(await fs.readFile(notesPath, 'utf8'));
+    const noteIndex = data.findIndex((n: any) => n.id === noteId);
+    if (noteIndex !== -1) {
+      data[noteIndex][field] = value;
+      await fs.writeFile(notesPath, JSON.stringify(data, null, 2));
+    }
+  } else if (action === 'ADD_FRIEND') {
+    const friendsPath = path.join(process.cwd(), 'src', 'data', 'friends.json');
+    const data = JSON.parse(await fs.readFile(friendsPath, 'utf8'));
+    data.push(payload);
+    await fs.writeFile(friendsPath, JSON.stringify(data, null, 2));
+  } else if (action === 'REMOVE_FRIEND') {
+    const friendsPath = path.join(process.cwd(), 'src', 'data', 'friends.json');
+    let data = JSON.parse(await fs.readFile(friendsPath, 'utf8'));
+    data = data.filter((f: any) => f.name !== payload.name);
+    await fs.writeFile(friendsPath, JSON.stringify(data, null, 2));
+  } else if (action === 'REMOVE_ALTERNATE_WAY') {
+    const { noteId, altId } = payload;
+    const notesPath = path.join(process.cwd(), 'src', 'data', 'notes.json');
+    const data = JSON.parse(await fs.readFile(notesPath, 'utf8'));
+    const noteIndex = data.findIndex((n: any) => n.id === noteId);
+    if (noteIndex !== -1 && data[noteIndex].otherWays) {
+      data[noteIndex].otherWays = data[noteIndex].otherWays.filter((w: any) => w.id !== altId);
       await fs.writeFile(notesPath, JSON.stringify(data, null, 2));
     }
   } else if (action === 'UPDATE_REVISIONS') {

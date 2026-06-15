@@ -7,7 +7,7 @@
     ],
     "problemLogic": "This is a detailed explanation of the logic for problem 1. We use the optimal approach here to reduce the time complexity.",
     "mistakes": "None. Solved it first try.",
-    "code": "function twoSum(nums, target) {\n  const map = new Map();\n  for (let i = 0; i < nums.length; i++) {\n    const diff = target - nums[i];\n    if (map.has(diff)) return [map.get(diff), i];\n    map.set(nums[i], i);\n  }\n}",
+    "code": "added test file edited\nfunction twoSum(nums, target) {\n  const map = new Map();\n  for (let i = 0; i < nums.length; i++) {\n    const diff = target - nums[i];\n    if (map.has(diff)) return [map.get(diff), i];\n    map.set(nums[i], i);\n  }\n}",
     "complexity": {
       "time": "O(2^N)",
       "space": "O(N)"
@@ -2056,5 +2056,35 @@
     },
     "dateAdded": "2026-05-05T09:23:57.693Z",
     "otherWays": []
+  },
+  {
+    "id": "1781535579383",
+    "title": "testing code upload",
+    "tags": [
+      "arrays",
+      "yes",
+      "no"
+    ],
+    "problemLogic": "testing problems testing problems testing problems testing problems testing problems testing problems ",
+    "mistakes": "code example :\njasdflksafj fjhafsdfhcode example :\njasdflksafj fjhafsdfhcode example :\njasdflksafj fjhafsdfh",
+    "code": "#include <iostream>\n#include <vector>\n#include <algorithm>\n\n// Function to find maximum sum of a subarray of size k\nint maxSubarraySum(const std::vector<int>& arr, int k) {\n    int n = arr.size();\n    if (n < k) {\n        std::cerr << \"Invalid input: Array size is smaller than window size.\\n\";\n        return -1;\n    }\n\n    // 1. Compute the sum of the very first window\n    int current_window_sum = 0;\n    for (int i = 0; i < k; ++i) {\n        current_window_sum += arr[i];\n    }\n\n    int max_sum = current_window_sum;\n\n    // 2. Slide the window across the rest of the array\n    for (int i = k; i < n; ++i) {\n        // Add the next element, subtract the element that is falling behind\n        current_window_sum += arr[i] - arr[i - k];\n        \n        // Update the maximum sum found so far\n        max_sum = std::max(max_sum, current_window_sum);\n    }\n\n    return max_sum;\n}\n\nint main() {\n    std::vector<int> data = {2, 1, 5, 1, 3, 2};\n    int window_size = 3;\n\n    int result = maxSubarraySum(data, window_size);\n    std::cout << \"Maximum sum of a subarray of size \" << window_size << \" is: \" << result << \"\\n\";\n\n    return 0;\n}\n",
+    "complexity": {
+      "time": "O(N^2)",
+      "space": "O(1)"
+    },
+    "dateAdded": "2026-06-15",
+    "otherWays": [
+      {
+        "id": "1781535579383_alt",
+        "title": "title twi test",
+        "logic": "fsdag asdg fd afdsafsdag asdg fd afdsafsdag asdg fd afdsafsdag asdg fd afdsa",
+        "code": "#include <iostream>\n#include <vector>\n#include <algorithm>\n\n// Function to find maximum sum of a subarray of size k\nint maxSubarraySum(const std::vector<int>& arr, int k) {\n    int n = arr.size();\n    if (n < k) {\n        std::cerr << \"Invalid input: Array size is smaller than window size.\\n\";\n        return -1;\n    }\n\n    // 1. Compute the sum of the very first window\n    int current_window_sum = 0;\n    for (int i = 0; i < k; ++i) {\n        current_window_sum += arr[i];\n    }\n\n    int max_sum = current_window_sum;\n\n    // 2. Slide the window across the rest of the array\n    for (int i = k; i < n; ++i) {\n        // Add the next element, subtract the element that is falling behind\n        current_window_sum fsadf+= arr[i] - arr[i - k];\n        \n        // Update the maximum sum found so far\n        max_sum = std::max(max_sum, current_window_sum);\n    }\n\n    return max_sum;\n}\n\nint main() {\n    std::vector<int> data = {2, 1, 5, 1, 3, 2};\n    int window_size = 3;\n\n    int result = maxSubarraySum(data, window_size);\n    std::cout << \"Maximum sum of a subarray of size \" << window_size << \" is: \" << result << \"\\n\";\n\n    return 0;\n}\n",
+        "complexity": {
+          "time": "O(N)",
+          "space": "O(1)"
+        }
+      }
+    ],
+    "problemUrl": "https://testedSuccess.com"
   }
 ]
