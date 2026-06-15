@@ -87,26 +87,25 @@ export default function Home() {
       });
   }, []);
 
-  const markRevisedSRS = (id: string, difficulty: 'forgot' | 'hard' | 'easy') => {
+  const markCustomRevised = (id: string, dateStr: string) => {
+    if (!dateStr) return;
     const prev = revisionMap[id];
-    let interval = prev ? prev.interval : 0;
-    
-    if (difficulty === 'forgot') interval = 1;
-    else if (difficulty === 'hard') interval = Math.max(1, Math.round((interval === 0 ? 1 : interval) * 1.5));
-    else if (difficulty === 'easy') interval = Math.max(3, Math.round((interval === 0 ? 1 : interval) * 2.5));
-    
     const now = Date.now();
-    const nextDue = now + interval * 24 * 60 * 60 * 1000;
+    
+    // Parse the date at local noon to avoid timezone shift issues
+    const parts = dateStr.split('-');
+    const nextDue = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]), 12, 0, 0).getTime();
+    
     const history = prev?.history ? [...prev.history, now] : [now];
     
-    const updated = { ...revisionMap, [id]: { lastRevised: now, nextDue, interval, history, solveTimes: prev?.solveTimes } };
+    const updated = { ...revisionMap, [id]: { lastRevised: now, nextDue, interval: 0, history, solveTimes: prev?.solveTimes } };
     setRevisionMap(updated);
     localStorage.setItem('dsaRevisionMap', JSON.stringify(updated));
     fetch('/api/github', { method: 'POST', body: JSON.stringify({ action: 'UPDATE_REVISIONS', payload: updated }) })
       .then(res => res.json())
       .then(data => {
         if (!data.success) {
-          alert(`SRS Sync Failed!\nError: ${data.error}\nDetails: ${data.details}`);
+          alert(`Sync Failed!\nError: ${data.error}\nDetails: ${data.details}`);
         }
       });
   };
@@ -614,16 +613,24 @@ export default function Home() {
                     <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                       Last Revised: {revisionMap[selectedNote.id] ? new Date(revisionMap[selectedNote.id].lastRevised).toLocaleDateString() : 'Never'}
                     </span>
-                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                      <button className="btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: 'var(--danger)', color: 'var(--danger)' }} onClick={() => markRevisedSRS(selectedNote.id, 'forgot')} title="Forgot the logic entirely (Due tomorrow)">
-                        Forgot (1d)
-                      </button>
-                      <button className="btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: 'var(--warning)', color: 'var(--warning)' }} onClick={() => markRevisedSRS(selectedNote.id, 'hard')} title="Solved but struggled (1.5x interval)">
-                        Hard
-                      </button>
-                      <button className="btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderColor: 'var(--success)', color: 'var(--success)' }} onClick={() => markRevisedSRS(selectedNote.id, 'easy')} title="Perfectly solved (2.5x interval)">
-                        Easy
-                      </button>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: '500' }}>Next Due:</span>
+                      <input 
+                        type="date" 
+                        style={{ 
+                          background: 'var(--panel-bg)', 
+                          color: 'var(--text-main)', 
+                          border: '1px solid var(--panel-border)', 
+                          borderRadius: '6px', 
+                          padding: '4px 8px', 
+                          fontSize: '0.85rem',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                        value={revisionMap[selectedNote.id]?.nextDue ? new Date(revisionMap[selectedNote.id].nextDue).toISOString().split('T')[0] : ''}
+                        onChange={(e) => markCustomRevised(selectedNote.id, e.target.value)}
+                        title="Set a custom date for when you want to revise this next"
+                      />
                     </div>
                   </div>
                 </div>
