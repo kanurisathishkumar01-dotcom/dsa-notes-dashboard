@@ -56,6 +56,9 @@ When I explicitly say "Save this problem", "Archive this", or "Hardcode this int
 **UPDATING EXISTING PROBLEMS:**
 If I say "Add an alternate solution to [Problem Name]", you must find that specific problem in `src/data/notes.ts` and append a properly formatted `OtherWay` object to its `otherWays` array using your file editing tools.
 
+**ADDING FRIENDS:**
+If I say "Add my friend [Name] with URL [URL]", you must open `src/data/friends.ts` and append the new friend object `{ name: "...", url: "..." }` into the `friendsList` array using your file editing tools.
+
 **WORKFLOW - PHASE 3: AUTOMATED CLOUD DEPLOYMENT (VERCEL SYNC)**
 Immediately after archiving a new note or updating a file (Phase 2), you must autonomously push the changes to GitHub so my Vercel dashboard updates.
 1. Run `git add .` using your terminal tools.
