@@ -349,7 +349,8 @@ export default function Home() {
   const handleExport = () => {
     const exportData = {
       notes: localNotes,
-      revisions: revisionMap
+      revisions: revisionMap,
+      friends: friends
     };
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
     const downloadAnchorNode = document.createElement('a');
@@ -373,38 +374,50 @@ export default function Home() {
         try {
           const parsed = JSON.parse(e.target?.result as string);
           
-          let newNotes: any[] = [];
-          let newRevs: any = {};
-          let newFriends: any[] = [];
+          let newNotes: any[] | null = null;
+          let newRevs: any | null = null;
+          let newFriends: any[] | null = null;
 
+          // Detect what format the backup is in
           if (Array.isArray(parsed)) {
+            // Very old backup (just notes array)
             newNotes = parsed;
-          } else if (parsed.notes && parsed.revisions) {
-            newNotes = parsed.notes;
-            newRevs = parsed.revisions;
-            newFriends = parsed.friends || friends;
+          } else {
+            // Modern backup format
+            if (parsed.notes) newNotes = parsed.notes;
+            if (parsed.revisions) newRevs = parsed.revisions;
+            if (parsed.friends) newFriends = parsed.friends;
           }
 
-          setLocalNotes(newNotes);
-          setRevisionMap(newRevs);
-          setFriends(newFriends);
-          localStorage.setItem('dsaRevisionMap', JSON.stringify(newRevs));
+          if (newNotes) setLocalNotes(newNotes);
+          if (newRevs) {
+            setRevisionMap(newRevs);
+            localStorage.setItem('dsaRevisionMap', JSON.stringify(newRevs));
+          }
+          if (newFriends) setFriends(newFriends);
 
-          if (confirm("Imported locally! Do you want to push this entire backup straight to your live GitHub repository right now to make it permanent?")) {
+          if (confirm("Imported locally! Do you want to push this backup straight to your live GitHub repository right now to make it permanent?")) {
             // Must be sequential to prevent GitHub 409 Conflict (parallel commits to same branch)
             const syncData = async () => {
               const fails = [];
-              const notesRes = await apiSync('OVERWRITE_NOTES', newNotes).then(r=>r.json());
-              if (!notesRes.success) fails.push(notesRes);
               
-              const revsRes = await apiSync('UPDATE_REVISIONS', newRevs).then(r=>r.json());
-              if (!revsRes.success) fails.push(revsRes);
+              if (newNotes) {
+                const notesRes = await apiSync('OVERWRITE_NOTES', newNotes).then(r=>r.json());
+                if (!notesRes.success) fails.push(notesRes);
+              }
               
-              const friendsRes = await apiSync('OVERWRITE_FRIENDS', newFriends).then(r=>r.json());
-              if (!friendsRes.success) fails.push(friendsRes);
+              if (newRevs) {
+                const revsRes = await apiSync('UPDATE_REVISIONS', newRevs).then(r=>r.json());
+                if (!revsRes.success) fails.push(revsRes);
+              }
+              
+              if (newFriends) {
+                const friendsRes = await apiSync('OVERWRITE_FRIENDS', newFriends).then(r=>r.json());
+                if (!friendsRes.success) fails.push(friendsRes);
+              }
 
               if (fails.length === 0) {
-                alert("Successfully pushed full backup to GitHub! Refreshing page to align sync...");
+                alert("Successfully pushed backup to GitHub! Refreshing page to align sync...");
                 window.location.reload();
               } else {
                 alert(`Warning: Some syncs failed!\nDetails: ${fails.map(f => f.error).join(', ')}`);
