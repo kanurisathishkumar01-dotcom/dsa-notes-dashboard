@@ -1,25 +1,4 @@
-export interface OtherWay {
-  id: string;
-  title: string;
-  code: string;
-  logic: string;
-  complexity: { time: string; space: string; };
-}
-
-export interface DSANote {
-  id: string;
-  title: string;
-  tags: string[];
-  problemLogic: string;
-  mistakes: string;
-  code: string;
-  complexity: { time: string; space: string; };
-  dateAdded: string;
-  otherWays: OtherWay[];
-  problemUrl?: string;
-}
-
-export const dsaNotes: DSANote[] = [
+[
   {
     "id": "prob-1",
     "title": "LeetCode 724: Dummy Problem 1",
@@ -2078,4 +2057,4 @@ export const dsaNotes: DSANote[] = [
     "dateAdded": "2026-05-05T09:23:57.693Z",
     "otherWays": []
   }
-];
+]

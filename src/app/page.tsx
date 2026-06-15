@@ -1,8 +1,12 @@
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
-import { dsaNotes, DSANote, OtherWay } from '@/data/notes';
+import notesData from '@/data/notes.json';
 import { friendsList } from '@/data/friends';
+
+export interface OtherWay { id: string; title: string; code: string; logic: string; complexity: { time: string; space: string; }; }
+export interface DSANote { id: string; title: string; tags: string[]; problemLogic: string; mistakes: string; code: string; complexity: { time: string; space: string; }; dateAdded: string; otherWays: OtherWay[]; problemUrl?: string; }
+const dsaNotes: DSANote[] = notesData as DSANote[];
 
 export interface RevisionData {
   lastRevised: number;
@@ -61,7 +65,7 @@ export default function Home() {
       return migrated;
     };
 
-    fetch('/api/revisions')
+    fetch(`/api/revisions?t=${Date.now()}`, { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (Object.keys(data).length > 0) {
@@ -98,7 +102,13 @@ export default function Home() {
     const updated = { ...revisionMap, [id]: { lastRevised: now, nextDue, interval, history, solveTimes: prev?.solveTimes } };
     setRevisionMap(updated);
     localStorage.setItem('dsaRevisionMap', JSON.stringify(updated));
-    fetch('/api/revisions', { method: 'POST', body: JSON.stringify(updated) });
+    fetch('/api/github', { method: 'POST', body: JSON.stringify({ action: 'UPDATE_REVISIONS', payload: updated }) })
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          alert(`SRS Sync Failed!\nError: ${data.error}\nDetails: ${data.details}`);
+        }
+      });
   };
 
   const showFeedback = (type: 'shuriken' | 'turtle') => {
@@ -723,8 +733,10 @@ export default function Home() {
                   )}
                 </div>
 
-                {showOtherWays && selectedNote.otherWays.map(way => (
-                  <div key={way.id} className="detail-section glass">
+                {showOtherWays && (
+                  <>
+                    {selectedNote.otherWays.map(way => (
+                      <div key={way.id} className="detail-section glass" style={{ marginBottom: '1rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap', gap: '10px' }}>
                       <h3 style={{ color: 'var(--warning)', margin: 0 }}>Alternate: {way.title}</h3>
                       <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -764,9 +776,47 @@ export default function Home() {
                     )}
                   </div>
                 ))}
-              </div>
 
-              {/* Right Side: Notes and Logic */}
+                <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                  <button className="btn" onClick={() => {
+                    const title = prompt("Title of approach:");
+                    if (!title) return;
+                    const logic = prompt("Logic explanation:");
+                    if (!logic) return;
+                    const code = prompt("Paste code:");
+                    if (!code) return;
+                    const time = prompt("Time complexity:", "O(N)");
+                    const space = prompt("Space complexity:", "O(1)");
+                    
+                    const alternateWay = {
+                      id: Date.now().toString(),
+                      title, logic, code, complexity: { time: time || 'O(N)', space: space || 'O(1)' }
+                    };
+                    
+                    const updatedNote = { ...selectedNote, otherWays: [...(selectedNote.otherWays || []), alternateWay] };
+                    setSelectedNote(updatedNote);
+                    
+                    fetch('/api/github', {
+                      method: 'POST',
+                      body: JSON.stringify({ action: 'ADD_ALTERNATE_WAY', payload: { noteId: selectedNote.id, alternateWay } })
+                    }).then(res => res.json()).then(data => {
+                      if (data.success) {
+                        alert("Alternate Way pushed to GitHub successfully!");
+                      } else {
+                        alert(`GitHub Sync Failed!\nError: ${data.error}\nDetails: ${data.details}`);
+                      }
+                    }).catch(err => {
+                      alert("Network Error: " + err.message);
+                    });
+                  }}>
+                    + Add Alternate Way
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Right Side: Notes and Logic */}
               <div className="detail-right">
                 {showExplanation && (
                   <div className="detail-section" style={{ borderLeft: '4px solid var(--accent)' }}>
