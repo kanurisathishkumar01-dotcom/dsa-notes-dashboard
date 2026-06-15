@@ -29,9 +29,9 @@ export async function POST(request: Request) {
     }
 
     let filePath = '';
-    if (action === 'ADD_NOTE' || action === 'ADD_ALTERNATE_WAY' || action === 'UPDATE_NOTE_FIELD' || action === 'REMOVE_ALTERNATE_WAY') filePath = 'src/data/notes.json';
+    if (action === 'ADD_NOTE' || action === 'ADD_ALTERNATE_WAY' || action === 'UPDATE_NOTE_FIELD' || action === 'REMOVE_ALTERNATE_WAY' || action === 'OVERWRITE_NOTES') filePath = 'src/data/notes.json';
     else if (action === 'UPDATE_REVISIONS') filePath = 'src/data/revisions.json';
-    else if (action === 'ADD_FRIEND' || action === 'REMOVE_FRIEND') filePath = 'src/data/friends.json';
+    else if (action === 'ADD_FRIEND' || action === 'REMOVE_FRIEND' || action === 'OVERWRITE_FRIENDS') filePath = 'src/data/friends.json';
     else return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
 
     const apiUrl = `https://api.github.com/repos/${repo}/contents/${filePath}`;
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
         currentData[noteIndex].otherWays = currentData[noteIndex].otherWays.filter((w: any) => w.id !== altId);
       }
       newContentString = JSON.stringify(currentData, null, 2);
-    } else if (action === 'UPDATE_REVISIONS') {
+    } else if (action === 'UPDATE_REVISIONS' || action === 'OVERWRITE_NOTES' || action === 'OVERWRITE_FRIENDS') {
       currentData = payload;
       newContentString = JSON.stringify(currentData, null, 2);
     }

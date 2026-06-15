@@ -361,21 +361,50 @@ export default function Home() {
   };
 
   const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isUnlocked) {
+      alert("Dashboard is locked! You cannot import backups.");
+      return;
+    }
+    
     const fileReader = new FileReader();
     if (event.target.files && event.target.files[0]) {
       fileReader.readAsText(event.target.files[0], "UTF-8");
       fileReader.onload = e => {
         try {
           const parsed = JSON.parse(e.target?.result as string);
+          
+          let newNotes: any[] = [];
+          let newRevs: any = {};
+          let newFriends: any[] = [];
+
           if (Array.isArray(parsed)) {
-            setLocalNotes(parsed);
+            newNotes = parsed;
           } else if (parsed.notes && parsed.revisions) {
-            setLocalNotes(parsed.notes);
-            setRevisionMap(parsed.revisions);
-            localStorage.setItem('dsaRevisionMap', JSON.stringify(parsed.revisions));
-            fetch('/api/revisions', { method: 'POST', body: JSON.stringify(parsed.revisions) });
+            newNotes = parsed.notes;
+            newRevs = parsed.revisions;
+            newFriends = parsed.friends || friends;
           }
-          alert("Imported successfully. To make permanent, ask the AI to hardcode this data!");
+
+          setLocalNotes(newNotes);
+          setRevisionMap(newRevs);
+          setFriends(newFriends);
+          localStorage.setItem('dsaRevisionMap', JSON.stringify(newRevs));
+
+          if (confirm("Imported locally! Do you want to push this entire backup straight to your live GitHub repository right now to make it permanent?")) {
+            Promise.all([
+              apiSync('OVERWRITE_NOTES', newNotes).then(r=>r.json()),
+              apiSync('UPDATE_REVISIONS', newRevs).then(r=>r.json()),
+              apiSync('OVERWRITE_FRIENDS', newFriends).then(r=>r.json())
+            ]).then(results => {
+              const fails = results.filter(r => !r.success);
+              if (fails.length === 0) {
+                alert("Successfully pushed full backup to GitHub! Refreshing page to align sync...");
+                window.location.reload();
+              } else {
+                alert(`Warning: Some syncs failed!\nDetails: ${fails.map(f => f.error).join(', ')}`);
+              }
+            });
+          }
         } catch(error) {
           alert("Error parsing JSON file");
         }
